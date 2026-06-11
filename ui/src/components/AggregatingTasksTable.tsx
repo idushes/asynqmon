@@ -42,6 +42,7 @@ function mapStateToProps(state: AppState) {
     error: state.tasks.aggregatingTasks.error,
     group: state.tasks.aggregatingTasks.group,
     tasks: state.tasks.aggregatingTasks.data,
+    totalCount: state.tasks.aggregatingTasks.totalCount,
     pollInterval: state.settings.pollInterval,
     pageSize: state.settings.taskRowsPerPage,
   };
@@ -68,6 +69,7 @@ interface Props {
   queue: string;
   selectedGroup: string;
   totalTaskCount: number; // total number of tasks in the group
+  taskTypeFilter: string;
 }
 
 const columns: TableColumn[] = [
@@ -181,6 +183,9 @@ function Row(props: RowProps) {
 }
 
 function AggregatingTasksTable(props: Props & ReduxProps) {
+  const totalTaskCount = props.taskTypeFilter.trim()
+    ? props.totalCount
+    : props.totalTaskCount;
   const listTasks = (qname: string, pgn?: PaginationOptions) =>
     props.listAggregatingTasksAsync(qname, props.selectedGroup, pgn);
 
@@ -218,7 +223,7 @@ function AggregatingTasksTable(props: Props & ReduxProps) {
   return (
     <TasksTable
       queue={props.queue}
-      totalTaskCount={props.totalTaskCount}
+      totalTaskCount={totalTaskCount}
       taskState="aggregating"
       loading={props.loading}
       error={props.error}
@@ -227,6 +232,7 @@ function AggregatingTasksTable(props: Props & ReduxProps) {
       allActionPending={props.allActionPending}
       pollInterval={props.pollInterval}
       pageSize={props.pageSize}
+      taskTypeFilter={props.taskTypeFilter}
       listTasks={listTasks}
       deleteAllTasks={deleteAllTasks}
       archiveAllTasks={archiveAllTasks}

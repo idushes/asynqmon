@@ -36,6 +36,7 @@ function mapStateToProps(state: AppState) {
     loading: state.tasks.scheduledTasks.loading,
     error: state.tasks.scheduledTasks.error,
     tasks: state.tasks.scheduledTasks.data,
+    totalCount: state.tasks.scheduledTasks.totalCount,
     batchActionPending: state.tasks.scheduledTasks.batchActionPending,
     allActionPending: state.tasks.scheduledTasks.allActionPending,
     pollInterval: state.settings.pollInterval,
@@ -64,6 +65,7 @@ type ReduxProps = ConnectedProps<typeof connector>;
 interface Props {
   queue: string; // name of the queue.
   totalTaskCount: number; // totoal number of scheduled tasks.
+  taskTypeFilter: string;
 }
 
 const columns: TableColumn[] = [
@@ -177,12 +179,16 @@ function Row(props: RowProps) {
 }
 
 function ScheduledTasksTable(props: Props & ReduxProps) {
+  const totalTaskCount = props.taskTypeFilter.trim()
+    ? props.totalCount
+    : props.totalTaskCount;
   return (
     <TasksTable
+      {...props}
       taskState="scheduled"
+      totalTaskCount={totalTaskCount}
       columns={columns}
       renderRow={(rowProps: RowProps) => <Row {...rowProps} />}
-      {...props}
     />
   );
 }

@@ -22,6 +22,7 @@ import (
 type listActiveTasksResponse struct {
 	Tasks []*activeTask       `json:"tasks"`
 	Stats *queueStateSnapshot `json:"stats"`
+	Total int                 `json:"total"`
 }
 
 func newListActiveTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadFormatter) http.HandlerFunc {
@@ -29,9 +30,17 @@ func newListActiveTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadFormatt
 		vars := mux.Vars(r)
 		qname := vars["qname"]
 		pageSize, pageNum := getPageOptions(r)
+		taskType := getTaskTypeFilter(r)
 
-		tasks, err := inspector.ListActiveTasks(
-			qname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+		tasks, total, err := listFilteredTaskInfos(
+			func(pageSize, pageNum int) ([]*asynq.TaskInfo, error) {
+				return inspector.ListActiveTasks(
+					qname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+			},
+			pageSize,
+			pageNum,
+			taskType,
+		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -70,6 +79,7 @@ func newListActiveTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadFormatt
 		resp := listActiveTasksResponse{
 			Tasks: activeTasks,
 			Stats: toQueueStateSnapshot(qinfo),
+			Total: listTasksTotal(total, qinfo.Active),
 		}
 		writeResponseJSON(w, resp)
 	}
@@ -155,8 +165,16 @@ func newListPendingTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadFormat
 		vars := mux.Vars(r)
 		qname := vars["qname"]
 		pageSize, pageNum := getPageOptions(r)
-		tasks, err := inspector.ListPendingTasks(
-			qname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+		taskType := getTaskTypeFilter(r)
+		tasks, total, err := listFilteredTaskInfos(
+			func(pageSize, pageNum int) ([]*asynq.TaskInfo, error) {
+				return inspector.ListPendingTasks(
+					qname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+			},
+			pageSize,
+			pageNum,
+			taskType,
+		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -174,6 +192,7 @@ func newListPendingTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadFormat
 			payload["tasks"] = toPendingTasks(tasks, pf)
 		}
 		payload["stats"] = toQueueStateSnapshot(qinfo)
+		payload["total"] = listTasksTotal(total, qinfo.Pending)
 		writeResponseJSON(w, payload)
 	}
 }
@@ -183,8 +202,16 @@ func newListScheduledTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadForm
 		vars := mux.Vars(r)
 		qname := vars["qname"]
 		pageSize, pageNum := getPageOptions(r)
-		tasks, err := inspector.ListScheduledTasks(
-			qname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+		taskType := getTaskTypeFilter(r)
+		tasks, total, err := listFilteredTaskInfos(
+			func(pageSize, pageNum int) ([]*asynq.TaskInfo, error) {
+				return inspector.ListScheduledTasks(
+					qname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+			},
+			pageSize,
+			pageNum,
+			taskType,
+		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -202,6 +229,7 @@ func newListScheduledTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadForm
 			payload["tasks"] = toScheduledTasks(tasks, pf)
 		}
 		payload["stats"] = toQueueStateSnapshot(qinfo)
+		payload["total"] = listTasksTotal(total, qinfo.Scheduled)
 		writeResponseJSON(w, payload)
 	}
 }
@@ -211,8 +239,16 @@ func newListRetryTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadFormatte
 		vars := mux.Vars(r)
 		qname := vars["qname"]
 		pageSize, pageNum := getPageOptions(r)
-		tasks, err := inspector.ListRetryTasks(
-			qname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+		taskType := getTaskTypeFilter(r)
+		tasks, total, err := listFilteredTaskInfos(
+			func(pageSize, pageNum int) ([]*asynq.TaskInfo, error) {
+				return inspector.ListRetryTasks(
+					qname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+			},
+			pageSize,
+			pageNum,
+			taskType,
+		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -230,6 +266,7 @@ func newListRetryTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadFormatte
 			payload["tasks"] = toRetryTasks(tasks, pf)
 		}
 		payload["stats"] = toQueueStateSnapshot(qinfo)
+		payload["total"] = listTasksTotal(total, qinfo.Retry)
 		writeResponseJSON(w, payload)
 	}
 }
@@ -239,8 +276,16 @@ func newListArchivedTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadForma
 		vars := mux.Vars(r)
 		qname := vars["qname"]
 		pageSize, pageNum := getPageOptions(r)
-		tasks, err := inspector.ListArchivedTasks(
-			qname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+		taskType := getTaskTypeFilter(r)
+		tasks, total, err := listFilteredTaskInfos(
+			func(pageSize, pageNum int) ([]*asynq.TaskInfo, error) {
+				return inspector.ListArchivedTasks(
+					qname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+			},
+			pageSize,
+			pageNum,
+			taskType,
+		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -258,6 +303,7 @@ func newListArchivedTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadForma
 			payload["tasks"] = toArchivedTasks(tasks, pf)
 		}
 		payload["stats"] = toQueueStateSnapshot(qinfo)
+		payload["total"] = listTasksTotal(total, qinfo.Archived)
 		writeResponseJSON(w, payload)
 	}
 }
@@ -267,7 +313,16 @@ func newListCompletedTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadForm
 		vars := mux.Vars(r)
 		qname := vars["qname"]
 		pageSize, pageNum := getPageOptions(r)
-		tasks, err := inspector.ListCompletedTasks(qname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+		taskType := getTaskTypeFilter(r)
+		tasks, total, err := listFilteredTaskInfos(
+			func(pageSize, pageNum int) ([]*asynq.TaskInfo, error) {
+				return inspector.ListCompletedTasks(
+					qname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+			},
+			pageSize,
+			pageNum,
+			taskType,
+		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -285,6 +340,7 @@ func newListCompletedTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadForm
 			payload["tasks"] = toCompletedTasks(tasks, pf, rf)
 		}
 		payload["stats"] = toQueueStateSnapshot(qinfo)
+		payload["total"] = listTasksTotal(total, qinfo.Completed)
 		writeResponseJSON(w, payload)
 	}
 }
@@ -295,8 +351,16 @@ func newListAggregatingTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadFo
 		qname := vars["qname"]
 		gname := vars["gname"]
 		pageSize, pageNum := getPageOptions(r)
-		tasks, err := inspector.ListAggregatingTasks(
-			qname, gname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+		taskType := getTaskTypeFilter(r)
+		tasks, total, err := listFilteredTaskInfos(
+			func(pageSize, pageNum int) ([]*asynq.TaskInfo, error) {
+				return inspector.ListAggregatingTasks(
+					qname, gname, asynq.PageSize(pageSize), asynq.Page(pageNum))
+			},
+			pageSize,
+			pageNum,
+			taskType,
+		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -320,6 +384,7 @@ func newListAggregatingTasksHandlerFunc(inspector *asynq.Inspector, pf PayloadFo
 		}
 		payload["stats"] = toQueueStateSnapshot(qinfo)
 		payload["groups"] = toGroupInfos(groups)
+		payload["total"] = listTasksTotal(total, groupSize(groups, gname))
 		writeResponseJSON(w, payload)
 	}
 }
@@ -717,6 +782,72 @@ func getPageOptions(r *http.Request) (pageSize, pageNum int) {
 		}
 	}
 	return pageSize, pageNum
+}
+
+func getTaskTypeFilter(r *http.Request) string {
+	return strings.TrimSpace(r.URL.Query().Get("task_type"))
+}
+
+type listTaskInfosFunc func(pageSize, pageNum int) ([]*asynq.TaskInfo, error)
+
+func listFilteredTaskInfos(listTaskInfos listTaskInfosFunc, pageSize, pageNum int, taskType string) ([]*asynq.TaskInfo, int, error) {
+	if taskType == "" {
+		tasks, err := listTaskInfos(pageSize, pageNum)
+		return tasks, -1, err
+	}
+
+	const scanPageSize = 100
+	var matches []*asynq.TaskInfo
+	normalizedTaskType := strings.ToLower(taskType)
+	for page := 1; ; page++ {
+		tasks, err := listTaskInfos(scanPageSize, page)
+		if err != nil {
+			return nil, 0, err
+		}
+		for _, task := range tasks {
+			if strings.Contains(strings.ToLower(task.Type), normalizedTaskType) {
+				matches = append(matches, task)
+			}
+		}
+		if len(tasks) < scanPageSize {
+			break
+		}
+	}
+	return paginateTaskInfos(matches, pageSize, pageNum), len(matches), nil
+}
+
+func paginateTaskInfos(tasks []*asynq.TaskInfo, pageSize, pageNum int) []*asynq.TaskInfo {
+	if pageSize <= 0 {
+		return []*asynq.TaskInfo{}
+	}
+	if pageNum < 1 {
+		pageNum = 1
+	}
+	start := (pageNum - 1) * pageSize
+	if start >= len(tasks) {
+		return []*asynq.TaskInfo{}
+	}
+	end := start + pageSize
+	if end > len(tasks) {
+		end = len(tasks)
+	}
+	return tasks[start:end]
+}
+
+func listTasksTotal(filteredTotal, defaultTotal int) int {
+	if filteredTotal >= 0 {
+		return filteredTotal
+	}
+	return defaultTotal
+}
+
+func groupSize(groups []*asynq.GroupInfo, name string) int {
+	for _, group := range groups {
+		if group.Group == name {
+			return group.Size
+		}
+	}
+	return 0
 }
 
 func newGetTaskHandlerFunc(inspector *asynq.Inspector, pf PayloadFormatter, rf ResultFormatter) http.HandlerFunc {

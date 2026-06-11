@@ -32,6 +32,7 @@ function mapStateToProps(state: AppState) {
     loading: state.tasks.pendingTasks.loading,
     error: state.tasks.pendingTasks.error,
     tasks: state.tasks.pendingTasks.data,
+    totalCount: state.tasks.pendingTasks.totalCount,
     batchActionPending: state.tasks.pendingTasks.batchActionPending,
     allActionPending: state.tasks.pendingTasks.allActionPending,
     pollInterval: state.settings.pollInterval,
@@ -57,6 +58,7 @@ type ReduxProps = ConnectedProps<typeof connector>;
 interface Props {
   queue: string;
   totalTaskCount: number; // total number of pending tasks
+  taskTypeFilter: string;
 }
 
 const columns: TableColumn[] = [
@@ -162,12 +164,16 @@ function Row(props: RowProps) {
 }
 
 function PendingTasksTable(props: Props & ReduxProps) {
+  const totalTaskCount = props.taskTypeFilter.trim()
+    ? props.totalCount
+    : props.totalTaskCount;
   return (
     <TasksTable
+      {...props}
       taskState="pending"
+      totalTaskCount={totalTaskCount}
       columns={columns}
       renderRow={(rowProps: RowProps) => <Row {...rowProps} />}
-      {...props}
     />
   );
 }

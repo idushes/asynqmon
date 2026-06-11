@@ -36,6 +36,7 @@ function mapStateToProps(state: AppState) {
     loading: state.tasks.retryTasks.loading,
     error: state.tasks.retryTasks.error,
     tasks: state.tasks.retryTasks.data,
+    totalCount: state.tasks.retryTasks.totalCount,
     batchActionPending: state.tasks.retryTasks.batchActionPending,
     allActionPending: state.tasks.retryTasks.allActionPending,
     pollInterval: state.settings.pollInterval,
@@ -64,6 +65,7 @@ type ReduxProps = ConnectedProps<typeof connector>;
 interface Props {
   queue: string; // name of the queue.
   totalTaskCount: number; // totoal number of scheduled tasks.
+  taskTypeFilter: string;
 }
 
 const columns: TableColumn[] = [
@@ -184,12 +186,16 @@ function Row(props: RowProps) {
 }
 
 function RetryTasksTable(props: Props & ReduxProps) {
+  const totalTaskCount = props.taskTypeFilter.trim()
+    ? props.totalCount
+    : props.totalTaskCount;
   return (
     <TasksTable
+      {...props}
       taskState="retry"
+      totalTaskCount={totalTaskCount}
       columns={columns}
       renderRow={(rowProps: RowProps) => <Row {...rowProps} />}
-      {...props}
     />
   );
 }

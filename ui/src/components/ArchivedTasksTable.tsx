@@ -32,6 +32,7 @@ function mapStateToProps(state: AppState) {
     loading: state.tasks.archivedTasks.loading,
     error: state.tasks.archivedTasks.error,
     tasks: state.tasks.archivedTasks.data,
+    totalCount: state.tasks.archivedTasks.totalCount,
     batchActionPending: state.tasks.archivedTasks.batchActionPending,
     allActionPending: state.tasks.archivedTasks.allActionPending,
     pollInterval: state.settings.pollInterval,
@@ -57,6 +58,7 @@ type ReduxProps = ConnectedProps<typeof connector>;
 interface Props {
   queue: string; // name of the queue.
   totalTaskCount: number; // totoal number of archived tasks.
+  taskTypeFilter: string;
 }
 
 const columns: TableColumn[] = [
@@ -162,12 +164,16 @@ function Row(props: RowProps) {
 }
 
 function ArchivedTasksTable(props: Props & ReduxProps) {
+  const totalTaskCount = props.taskTypeFilter.trim()
+    ? props.totalCount
+    : props.totalTaskCount;
   return (
     <TasksTable
+      {...props}
       taskState="archived"
+      totalTaskCount={totalTaskCount}
       columns={columns}
       renderRow={(rowProps: RowProps) => <Row {...rowProps} />}
-      {...props}
     />
   );
 }

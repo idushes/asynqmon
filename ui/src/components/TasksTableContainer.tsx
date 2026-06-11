@@ -109,6 +109,9 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: "2px",
   },
   searchbar: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
     paddingLeft: theme.spacing(1),
     paddingRight: theme.spacing(1),
     marginRight: theme.spacing(1),
@@ -116,12 +119,17 @@ const useStyles = makeStyles((theme) => ({
   },
   search: {
     position: "relative",
+    width: "100%",
     maxWidth: 400,
     borderRadius: "18px",
     backgroundColor: isDarkTheme(theme) ? "#303030" : theme.palette.grey[100],
     "&:hover, &:focus": {
       backgroundColor: isDarkTheme(theme) ? "#303030" : theme.palette.grey[200],
     },
+  },
+  taskTypeSearch: {
+    maxWidth: 260,
+    marginRight: theme.spacing(1),
   },
   searchIcon: {
     padding: theme.spacing(0, 2),
@@ -164,6 +172,7 @@ function TasksTableContainer(props: Props & ReduxProps) {
   ];
 
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [taskTypeFilter, setTaskTypeFilter] = useState<string>("");
 
   return (
     <Paper variant="outlined" className={classes.container}>
@@ -188,6 +197,25 @@ function TasksTableContainer(props: Props & ReduxProps) {
           ))}
         </div>
         <div className={classes.searchbar}>
+          <div className={`${classes.search} ${classes.taskTypeSearch}`}>
+            <div className={classes.searchIcon}>
+              <SearchIcon />
+            </div>
+            <InputBase
+              placeholder="Filter by type"
+              classes={{
+                root: classes.inputRoot,
+                input: classes.inputInput,
+              }}
+              value={taskTypeFilter}
+              onChange={(e) => {
+                setTaskTypeFilter(e.target.value);
+              }}
+              inputProps={{
+                "aria-label": "filter by task type",
+              }}
+            />
+          </div>
           <div className={classes.search}>
             <div className={classes.searchIcon}>
               <SearchIcon />
@@ -220,39 +248,48 @@ function TasksTableContainer(props: Props & ReduxProps) {
         <ActiveTasksTable
           queue={props.queue}
           totalTaskCount={currentStats.active}
+          taskTypeFilter={taskTypeFilter}
         />
       </TabPanel>
       <TabPanel value="pending" selected={props.selected}>
         <PendingTasksTable
           queue={props.queue}
           totalTaskCount={currentStats.pending}
+          taskTypeFilter={taskTypeFilter}
         />
       </TabPanel>
       <TabPanel value="aggregating" selected={props.selected}>
-        <AggregatingTasksTableContainer queue={props.queue} />
+        <AggregatingTasksTableContainer
+          queue={props.queue}
+          taskTypeFilter={taskTypeFilter}
+        />
       </TabPanel>
       <TabPanel value="scheduled" selected={props.selected}>
         <ScheduledTasksTable
           queue={props.queue}
           totalTaskCount={currentStats.scheduled}
+          taskTypeFilter={taskTypeFilter}
         />
       </TabPanel>
       <TabPanel value="retry" selected={props.selected}>
         <RetryTasksTable
           queue={props.queue}
           totalTaskCount={currentStats.retry}
+          taskTypeFilter={taskTypeFilter}
         />
       </TabPanel>
       <TabPanel value="archived" selected={props.selected}>
         <ArchivedTasksTable
           queue={props.queue}
           totalTaskCount={currentStats.archived}
+          taskTypeFilter={taskTypeFilter}
         />
       </TabPanel>
       <TabPanel value="completed" selected={props.selected}>
         <CompletedTasksTable
           queue={props.queue}
           totalTaskCount={currentStats.completed}
+          taskTypeFilter={taskTypeFilter}
         />
       </TabPanel>
     </Paper>

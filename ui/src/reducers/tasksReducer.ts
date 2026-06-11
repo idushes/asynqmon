@@ -180,6 +180,7 @@ interface TasksState {
     batchActionPending: boolean;
     allActionPending: boolean;
     error: string;
+    totalCount: number;
     data: TaskInfoExtended[];
   };
   pendingTasks: {
@@ -187,6 +188,7 @@ interface TasksState {
     batchActionPending: boolean;
     allActionPending: boolean;
     error: string;
+    totalCount: number;
     data: TaskInfoExtended[];
   };
   scheduledTasks: {
@@ -194,6 +196,7 @@ interface TasksState {
     batchActionPending: boolean;
     allActionPending: boolean;
     error: string;
+    totalCount: number;
     data: TaskInfoExtended[];
   };
   retryTasks: {
@@ -201,6 +204,7 @@ interface TasksState {
     batchActionPending: boolean;
     allActionPending: boolean;
     error: string;
+    totalCount: number;
     data: TaskInfoExtended[];
   };
   archivedTasks: {
@@ -208,6 +212,7 @@ interface TasksState {
     batchActionPending: boolean;
     allActionPending: boolean;
     error: string;
+    totalCount: number;
     data: TaskInfoExtended[];
   };
   completedTasks: {
@@ -215,6 +220,7 @@ interface TasksState {
     batchActionPending: boolean;
     allActionPending: boolean;
     error: string;
+    totalCount: number;
     data: TaskInfoExtended[];
   };
   aggregatingTasks: {
@@ -223,6 +229,7 @@ interface TasksState {
     batchActionPending: boolean;
     allActionPending: boolean;
     error: string;
+    totalCount: number;
     data: TaskInfoExtended[];
   };
   taskInfo: {
@@ -238,6 +245,7 @@ const initialState: TasksState = {
     batchActionPending: false,
     allActionPending: false,
     error: "",
+    totalCount: 0,
     data: [],
   },
   pendingTasks: {
@@ -245,6 +253,7 @@ const initialState: TasksState = {
     batchActionPending: false,
     allActionPending: false,
     error: "",
+    totalCount: 0,
     data: [],
   },
   scheduledTasks: {
@@ -252,6 +261,7 @@ const initialState: TasksState = {
     batchActionPending: false,
     allActionPending: false,
     error: "",
+    totalCount: 0,
     data: [],
   },
   retryTasks: {
@@ -259,6 +269,7 @@ const initialState: TasksState = {
     batchActionPending: false,
     allActionPending: false,
     error: "",
+    totalCount: 0,
     data: [],
   },
   archivedTasks: {
@@ -266,6 +277,7 @@ const initialState: TasksState = {
     batchActionPending: false,
     allActionPending: false,
     error: "",
+    totalCount: 0,
     data: [],
   },
   completedTasks: {
@@ -273,6 +285,7 @@ const initialState: TasksState = {
     batchActionPending: false,
     allActionPending: false,
     error: "",
+    totalCount: 0,
     data: [],
   },
   aggregatingTasks: {
@@ -281,6 +294,7 @@ const initialState: TasksState = {
     batchActionPending: false,
     allActionPending: false,
     error: "",
+    totalCount: 0,
     data: [],
   },
   taskInfo: {
@@ -338,6 +352,7 @@ function tasksReducer(
           ...state.activeTasks,
           loading: false,
           error: "",
+          totalCount: action.payload.total,
           data: action.payload.tasks.map((task) => ({
             ...task,
             canceling: false,
@@ -373,6 +388,7 @@ function tasksReducer(
           ...state.pendingTasks,
           loading: false,
           error: "",
+          totalCount: action.payload.total,
           data: action.payload.tasks.map((task) => ({
             ...task,
             requestPending: false,
@@ -407,6 +423,7 @@ function tasksReducer(
           ...state.scheduledTasks,
           loading: false,
           error: "",
+          totalCount: action.payload.total,
           data: action.payload.tasks.map((task) => ({
             ...task,
             requestPending: false,
@@ -441,6 +458,7 @@ function tasksReducer(
           ...state.retryTasks,
           loading: false,
           error: "",
+          totalCount: action.payload.total,
           data: action.payload.tasks.map((task) => ({
             ...task,
             requestPending: false,
@@ -475,6 +493,7 @@ function tasksReducer(
           ...state.archivedTasks,
           loading: false,
           error: "",
+          totalCount: action.payload.total,
           data: action.payload.tasks.map((task) => ({
             ...task,
             requestPending: false,
@@ -509,6 +528,7 @@ function tasksReducer(
           ...state.completedTasks,
           loading: false,
           error: "",
+          totalCount: action.payload.total,
           data: action.payload.tasks.map((task) => ({
             ...task,
             requestPending: false,
@@ -545,6 +565,7 @@ function tasksReducer(
           group: action.group,
           loading: false,
           error: "",
+          totalCount: action.payload.total,
           data: action.payload.tasks.map((task) => ({
             ...task,
             requestPending: false,

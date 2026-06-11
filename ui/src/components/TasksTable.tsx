@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -55,6 +55,7 @@ interface Props {
   pollInterval: number;
   pageSize: number;
   columns: TableColumn[];
+  taskTypeFilter: string;
 
   // actions
   listTasks: (qname: string, pgn: PaginationOptions) => void;
@@ -81,6 +82,12 @@ export default function TasksTable(props: Props) {
   const [page, setPage] = useState(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeTaskId, setActiveTaskId] = useState<string>("");
+  const taskTypeFilter = props.taskTypeFilter.trim();
+
+  useEffect(() => {
+    setPage(0);
+    setSelectedIds([]);
+  }, [taskTypeFilter, props.taskState]);
 
   const handlePageChange = (
     event: React.MouseEvent<HTMLButtonElement> | null,
@@ -187,9 +194,13 @@ export default function TasksTable(props: Props) {
   }
 
   const fetchData = useCallback(() => {
-    const pageOpts = { page: page + 1, size: pageSize };
+    const pageOpts: PaginationOptions = {
+      page: page + 1,
+      size: pageSize,
+      task_type: taskTypeFilter || undefined,
+    };
     listTasks(queue, pageOpts);
-  }, [page, pageSize, queue, listTasks]);
+  }, [page, pageSize, queue, listTasks, taskTypeFilter]);
 
   usePolling(fetchData, pollInterval);
 
