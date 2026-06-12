@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useEffect } from "react";
 import { connect, ConnectedProps } from "react-redux";
 import { useHistory } from "react-router-dom";
 import { makeStyles } from "@material-ui/core/styles";
@@ -15,17 +15,20 @@ import QueueBreadCrumb from "../components/QueueBreadcrumb";
 import { AppState } from "../store";
 import { getTaskInfoAsync } from "../actions/tasksActions";
 import { TaskDetailsRouteParams } from "../paths";
-import { usePolling } from "../hooks";
 import { listQueuesAsync } from "../actions/queuesActions";
 import SyntaxHighlighter from "../components/SyntaxHighlighter";
-import { durationFromSeconds, stringifyDuration, timeAgo, prettifyPayload } from "../utils";
+import {
+  durationFromSeconds,
+  stringifyDuration,
+  timeAgo,
+  prettifyPayload,
+} from "../utils";
 
 function mapStateToProps(state: AppState) {
   return {
     loading: state.tasks.taskInfo.loading,
     error: state.tasks.taskInfo.error,
     taskInfo: state.tasks.taskInfo.data,
-    pollInterval: state.settings.pollInterval,
     queues: state.queues.data.map((q) => q.name), // FIXME: This data may not be available
   };
 }
@@ -72,16 +75,12 @@ type Props = ConnectedProps<typeof connector>;
 function TaskDetailsView(props: Props) {
   const classes = useStyles();
   const { qname, taskId } = useParams<TaskDetailsRouteParams>();
-  const { getTaskInfoAsync, pollInterval, listQueuesAsync, taskInfo } = props;
+  const { getTaskInfoAsync, listQueuesAsync, taskInfo } = props;
   const history = useHistory();
 
-  const fetchTaskInfo = useMemo(() => {
-    return () => {
-      getTaskInfoAsync(qname, taskId);
-    };
+  useEffect(() => {
+    getTaskInfoAsync(qname, taskId);
   }, [qname, taskId, getTaskInfoAsync]);
-
-  usePolling(fetchTaskInfo, pollInterval);
 
   // Fetch queues data to populate props.queues
   useEffect(() => {
